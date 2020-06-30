@@ -16,7 +16,7 @@ const comprehend = new AWS.Comprehend();
 const detectSentiment = params =>
   new Promise((resolve, reject) => {
     comprehend.detectSentiment(params, (err, data) => {
-      if (err) console.log(err, err.stack);
+      if (err) reject(err);
       resolve(data);
     });
   });

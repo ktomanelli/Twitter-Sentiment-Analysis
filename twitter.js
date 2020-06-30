@@ -8,13 +8,10 @@ const client = new Twitter({
   access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
 });
 
-// twitter shit is here
-const getTweets = (options = {}) => {
-  options = {
-    q: '',
-    count: 0,
+const getTweets = (input = {}) => {
+  const options = {
+    ...input,
     tweet_mode: 'extended',
-    ...options,
   };
 
   return new Promise((resolve, reject) => {
@@ -25,8 +22,4 @@ const getTweets = (options = {}) => {
   });
 };
 
-// const start = async () => {
-//   console.log(await getTweets({ q: 'epstein', count: 5, since_id: null }));
-// };
-// start();
 module.exports = { getTweets };

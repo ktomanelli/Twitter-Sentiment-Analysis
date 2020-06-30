@@ -1,7 +1,7 @@
 const { getTweets } = require('./twitter');
 const { detectSentiment } = require('./sentiment');
 
-const getBatch = async (q, since_id = null, count = 10) => {
+const getBatch = async (q, since_id = null, count = 100) => {
   let tweets;
   const tweetObjects = [];
 
@@ -10,7 +10,6 @@ const getBatch = async (q, since_id = null, count = 10) => {
   } catch (err) {
     console.log({ err, message: 'twitter error' });
   }
-  //   let count = 1;
   for (let tweet of tweets.statuses) {
     if (tweet.retweeted_status) {
       tweet = tweet.retweeted_status;
@@ -22,8 +21,6 @@ const getBatch = async (q, since_id = null, count = 10) => {
         LanguageCode: 'en',
         Text: tweet.full_text,
       });
-      //   console.log(`${count} - ${tweet.full_text}\n\n\n`);
-      //   count += 1;
     } catch (err) {
       console.log({ err, message: 'aws error' });
     }
@@ -42,12 +39,13 @@ const getAverages = (tweetObjects, avg = null) => {
   if (avg) {
     length = avg.length + tweetObjects.length;
     averages = {
-      POS: avg.POS * avg.length,
-      NEG: avg.NEG * avg.length,
-      NEU: avg.NEU * avg.length,
-      MIX: avg.MIX * avg.length,
+      POS: avg.newAverages.POS * avg.length,
+      NEG: avg.newAverages.NEG * avg.length,
+      NEU: avg.newAverages.NEU * avg.length,
+      MIX: avg.newAverages.MIX * avg.length,
     };
   } else {
+    // eslint-disable-next-line prefer-destructuring
     length = tweetObjects.length;
     averages = { POS: 0, NEG: 0, NEU: 0, MIX: 0 };
   }
@@ -62,26 +60,26 @@ const getAverages = (tweetObjects, avg = null) => {
     { POS: 0, NEG: 0, NEU: 0, MIX: 0 }
   );
 
-  averages = {
-    POS: totals.POS / length,
-    NEG: totals.NEG / length,
-    NUE: totals.NEU / length,
-    MIX: totals.MIX / length,
+  const newAverages = {
+    POS: (totals.POS + averages.POS) / length,
+    NEG: (totals.NEG + averages.NEG) / length,
+    NEU: (totals.NEU + averages.NEU) / length,
+    MIX: (totals.MIX + averages.MIX) / length,
   };
-  return { averages, length };
+  return { newAverages, length };
 };
 
-const areTheyCancelled = async q => {
+const startSentimentCollection = async q => {
   let batch = await getBatch(q);
   let last = batch[batch.length - 1].id;
   let avg = getAverages(batch);
   console.log(avg);
-  while (true) {
+  setInterval(async () => {
     batch = await getBatch(q, last);
     last = batch[batch.length - 1].id;
     avg = getAverages(batch, avg);
     console.log(avg);
-  }
+  }, 5000);
 };
 
-areTheyCancelled('epstein');
+startSentimentCollection('America');
